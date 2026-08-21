@@ -3,6 +3,36 @@
 Imports a FreeSurfer subject into pycortex, anchors its electrodes to the
 cortical surface, and builds a viewer you can open in a browser.
 
+Two scripts, for two situations:
+
+| script | when |
+| --- | --- |
+| `show_electrodes.py` | the subject is already in the pycortex database — the everyday case |
+| `electrodes_new_subject.py` | first contact with a subject: import it, check it, then view it |
+
+Once a subject has been imported, showing its electrodes is two lines of
+pycortex, and `show_electrodes.py` is barely more than that:
+
+```python
+electrodes = cortex.electrodes.load_electrodes(elecs_path, subject=subject)
+cortex.webgl.show(cortex.electrodes.blank(subject), electrodes=electrodes)
+```
+
+`show()` anchors the set itself, so there is no separate `anchor()` call.
+`blank()` is an all-NaN dataset, which both renderers mask out — it draws
+nothing and leaves the curvature showing, which is what you want under
+electrodes when there is no functional data. For a flatmap instead:
+
+```python
+cortex.quickflat.make_figure(cortex.electrodes.blank(subject),
+                             with_electrodes=electrodes, with_curvature=True)
+```
+
+Everything below is about `electrodes_new_subject.py`, which is longer because
+it does the things you only do once per subject: import from FreeSurfer, import
+the flattened surfaces, check the coordinates are in the surfaces' space, and
+report what the placement policy made of each contact.
+
 Needs the `electrodes` branch of
 [HamiltonLabUT/pycortex](https://github.com/HamiltonLabUT/pycortex), which adds
 `cortex.electrodes` and the electrode support in the flatmap and webgl
@@ -51,6 +81,18 @@ There is no `pip install` of this branch. Run everything with the repo on
 `PYTHONPATH`, as below.
 
 ## Running it
+
+Everyday, for a subject already imported:
+
+```bash
+cd /path/to/pycortex
+PYTHONPATH=$PWD .venv/bin/python /path/to/show_electrodes.py SUBJID
+```
+
+That opens the viewer and blocks; Ctrl-C to stop it. It reads the montage from
+`$SUBJECTS_DIR/SUBJID/elecs/TDT_elecs_all.mat`.
+
+First time with a subject:
 
 ```bash
 cd /path/to/pycortex
